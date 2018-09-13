@@ -8,6 +8,7 @@ import os.path
 import sys
 import subprocess
 from re import match
+from datetime import datetime
 
 # Config Janela
 
@@ -33,12 +34,20 @@ ttk.Label(dados, text='Plano de Saúde:').grid(row=2, column=0, padx=6, pady=3, 
 plano_saude = ttk.Entry(dados, width=30)
 plano_saude.grid(row=2, column=1, padx=6, pady=3, sticky='W')
 
-ttk.Label(dados, text='Data (dd/mm/aaaa):').grid(row=0, column=3, padx=6, pady=3, sticky='W')
-data_contato = ttk.Entry(dados, width=10)
+agora = datetime.now()
+
+data_agora = '{:02d}/{:02d}/{}'.format(agora.day, agora.month, agora.year)
+str_data = StringVar()
+str_data.set(data_agora)
+ttk.Label(dados, text='Data:').grid(row=0, column=3, padx=6, pady=3, sticky='W')
+data_contato = ttk.Entry(dados, width=10, textvariable=str_data)
 data_contato.grid(row=0, column=4, padx=6, pady=3, sticky='W')
 
-ttk.Label(dados, text='Hora (hh:mm):').grid(row=1, column=3, padx=6, pady=3, sticky='W')
-hora_contato = ttk.Entry(dados, width=10)
+hora_agora = '{:02d}:{:02d}'.format(agora.hour, agora.minute)
+str_hora = StringVar()
+str_hora.set(hora_agora)
+ttk.Label(dados, text='Hora:').grid(row=1, column=3, padx=6, pady=3, sticky='W')
+hora_contato = ttk.Entry(dados, width=10, textvariable=str_hora)
 hora_contato.grid(row=1, column=4, padx=6, pady=3, sticky='W')
 
 ttk.Label(dados, text='Hospital:').grid(row=2, column=3, padx=6, pady=3, sticky='W')
@@ -53,9 +62,11 @@ ttk.Label(dados, text='CRM:').grid(row=1, column=5, padx=6, pady=3, sticky='W')
 crm = ttk.Entry(dados, width=10)
 crm.grid(row=1, column=6, padx=6, pady=3, sticky='W')
 
-ttk.Label(dados, text='Tel. Contato:').grid(row=2, column=5, padx=6, pady=3, sticky='W')
-tel_contato = ttk.Entry(dados, width=15)
-tel_contato.grid(row=2, column=6, padx=6, pady=3, sticky='W')
+tipo_contato_var = StringVar()
+
+ttk.Label(dados, text='Meio de Contato:').grid(row=2, column=5, padx=6, pady=3, sticky='W')
+ttk.Combobox(dados, width=15, values=['Telefônico', 'Polycom'],
+                         textvariable=tipo_contato_var, state='readonly').grid(row=2, column=6, padx=6, pady=3, sticky='W')
 
 # 1 - Informações Clínicas
 
@@ -670,6 +681,18 @@ ttk.Checkbutton(achados_ecg_frame2, text='TVNS', onvalue='taquicardia ventricula
 rx = ttk.LabelFrame(exames_complementares, text='Radiografia de Tórax:', borderwidth=5)
 rx.pack(side=LEFT, anchor=N, padx=(0, 5), pady=10)
 
+def controle_entrada_achados_rx():
+    if rx_nao_realizado.get():
+        rx_frame2.pack_forget()
+    else:
+        rx_frame2.pack()
+
+rx_frame1 = ttk.Frame(rx)
+rx_frame1.pack(anchor=NW)
+rx_frame2 = ttk.Frame(rx)
+rx_frame2.pack(anchor=SW)
+
+rx_nao_realizado = StringVar()
 ac_aumentada = StringVar()
 derrame_pleural = StringVar()
 congestao = StringVar()
@@ -677,17 +700,24 @@ opacidades = StringVar()
 ptx = StringVar()
 alargamento_mediastinal = StringVar()
 
-ttk.Checkbutton(rx, text='Área cardíaca aumentada', onvalue='Área cardíaca aumentada',
+
+ttk.Checkbutton(rx_frame1, text='Não realizada', onvalue='não realizada',
+                offvalue='', variable=rx_nao_realizado, command=controle_entrada_achados_rx).pack(anchor=W)
+
+ttk.Separator(rx_frame2, orient=HORIZONTAL).pack(fill=X, pady=3, anchor=W)
+
+
+ttk.Checkbutton(rx_frame2, text='Área cardíaca aumentada', onvalue='Área cardíaca aumentada',
                 offvalue='', variable=ac_aumentada).pack(anchor=W)
-ttk.Checkbutton(rx, text='Derrame pleural', onvalue='Derrame pleural',
+ttk.Checkbutton(rx_frame2, text='Derrame pleural', onvalue='Derrame pleural',
                 offvalue='', variable=derrame_pleural).pack(anchor=W)
-ttk.Checkbutton(rx, text='Congestão pulmonar', onvalue='Sinais de congestão pulmonar',
+ttk.Checkbutton(rx_frame2, text='Congestão pulmonar', onvalue='Sinais de congestão pulmonar',
                 offvalue='', variable=congestao).pack(anchor=W)
-ttk.Checkbutton(rx, text='Opacidades pulmonares', onvalue='Opacidades no parênquima pulmonar',
+ttk.Checkbutton(rx_frame2, text='Opacidades pulmonares', onvalue='Opacidades no parênquima pulmonar',
                 offvalue='', variable=opacidades).pack(anchor=W)
-ttk.Checkbutton(rx, text='Pneumotórax', onvalue='Pneumotórax (unilateral)',
+ttk.Checkbutton(rx_frame2, text='Pneumotórax', onvalue='Pneumotórax (unilateral)',
                 offvalue='', variable=ptx).pack(anchor=W)
-ttk.Checkbutton(rx, text='Alargamento mediastinal', onvalue='Alargamento mediastinal',
+ttk.Checkbutton(rx_frame2, text='Alargamento mediastinal', onvalue='Alargamento mediastinal',
                 offvalue='', variable=alargamento_mediastinal).pack(anchor=W)
 
 # 3.3 - Exames Laboratoriais
@@ -780,11 +810,22 @@ inr_entry.grid(column=1, row=14, pady=3, sticky=W)
 outros_exames = ttk.LabelFrame(exames_complementares, text='Outros Exames:', borderwidth=5)
 outros_exames.pack(side=LEFT, anchor=N, padx=(0, 5), pady=10)
 
+def controle_entrada_outros_exames():
+    if nao_ha_outros_exames.get():
+        outros_exames_frame2.pack_forget()
+    else:
+        outros_exames_frame2.pack()
+
+outros_exames_frame1 = ttk.Frame(outros_exames)
+outros_exames_frame1.pack(anchor=NW)
+outros_exames_frame2 = ttk.Frame(outros_exames)
+outros_exames_frame2.pack(anchor=SW)
+
+nao_ha_outros_exames = StringVar()
 eco_ve = StringVar()
 eco_estresse_alterado = StringVar()
 eco_disfuncao_vd = StringVar()
 eco_hp = StringVar()
-eco_disfuncao_diastolica = StringVar()
 eco_estenose_importante = StringVar()
 eco_insuficiencia_importante = StringVar()
 eco_derrame = StringVar()
@@ -796,51 +837,53 @@ reestenose_stent = StringVar()
 enxerto_ocluido = StringVar()
 disseccao_aortica = StringVar()
 
-ttk.Label(outros_exames, text='Ecocardiograma:').pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Diminuição contrátil segmentar no VE',
+ttk.Checkbutton(outros_exames_frame1, text='Não há ou não informado',
+                onvalue='não há ou não informado', offvalue='', variable=nao_ha_outros_exames, command=controle_entrada_outros_exames).pack(anchor=W)
+
+ttk.Separator(outros_exames_frame2, orient=HORIZONTAL).pack(fill=X, pady=3, anchor=W)
+ttk.Label(outros_exames_frame2, text='Ecocardiograma:').pack(anchor=W)
+ttk.Checkbutton(outros_exames_frame2, text='Diminuição contrátil segmentar no VE',
                 onvalue='ecocardiograma com alteração contrátil segmentar no VE', offvalue='', variable=eco_ve).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Diminuição contrátil difusa no VE',
+ttk.Checkbutton(outros_exames_frame2, text='Diminuição contrátil difusa no VE',
                 onvalue='ecocardiograma com diminuição contrátil difusa no VE', offvalue='', variable=eco_ve).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Ecocardiograma com estresse alterado',
+ttk.Checkbutton(outros_exames_frame2, text='Ecocardiograma com estresse alterado',
                 onvalue='ecocardiograma com estresse alterado', offvalue='', variable=eco_estresse_alterado).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Disfunção sistólica do VD',
+ttk.Checkbutton(outros_exames_frame2, text='Disfunção sistólica do VD',
                 onvalue='ecocardiograma com disfunção sistólica do VD', offvalue='', variable=eco_disfuncao_vd).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Hipertensão pulmonar',
+ttk.Checkbutton(outros_exames_frame2, text='Hipertensão pulmonar',
                 onvalue='ecocardiograma com hipertensão pulmonar', offvalue='', variable=eco_hp).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Disfunção diastólica do VE',
-                onvalue='ecocardiograma com disfunção diastólica do VE', offvalue='', variable=eco_disfuncao_diastolica).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Estenose valvar importante',
+ttk.Checkbutton(outros_exames_frame2, text='Estenose valvar importante',
                 onvalue='ecocardiograma com estenose valvar importante', offvalue='', variable=eco_estenose_importante).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Insuficiência valvar importante',
+ttk.Checkbutton(outros_exames_frame2, text='Insuficiência valvar importante',
                 onvalue='ecocardiograma com insuficiência valvar importante', offvalue='',
                 variable=eco_insuficiencia_importante).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Derrame pericárdico',
+ttk.Checkbutton(outros_exames_frame2, text='Derrame pericárdico',
                 onvalue='ecocardiograma com derrame pericárdico', offvalue='', variable=eco_derrame).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Sinais de dissecção aórtica',
+ttk.Checkbutton(outros_exames_frame2, text='Sinais de dissecção aórtica',
                 onvalue='ecocardiograma com sinais de dissecção aórtica', offvalue='', variable=eco_disseccao).pack(anchor=W)
-ttk.Separator(outros_exames, orient=HORIZONTAL).pack(fill=X, pady=3)
-ttk.Label(outros_exames, text='Cintilografia:').pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Hipocaptação transitoria discreta',
+ttk.Separator(outros_exames_frame2, orient=HORIZONTAL).pack(fill=X, pady=3)
+ttk.Label(outros_exames_frame2, text='Cintilografia:').pack(anchor=W)
+ttk.Checkbutton(outros_exames_frame2, text='Hipocaptação transitoria discreta',
                 onvalue='cintilografia com hipocaptação transitoria discreta', offvalue='', variable=cintilo_transitoria).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Hipocaptação transitoria moderada',
+ttk.Checkbutton(outros_exames_frame2, text='Hipocaptação transitoria moderada',
                 onvalue='cintilografia com hipocaptação transitoria moderada', offvalue='', variable=cintilo_transitoria).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Hipocaptação transitoria importante',
+ttk.Checkbutton(outros_exames_frame2, text='Hipocaptação transitoria importante',
                 onvalue='cintilografia com hipocaptação transitoria importante', offvalue='', variable=cintilo_transitoria).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Hipocaptação fixa', onvalue='cintilografia com hipocaptação fixa', offvalue='',
+ttk.Checkbutton(outros_exames_frame2, text='Hipocaptação fixa', onvalue='cintilografia com hipocaptação fixa', offvalue='',
                 variable=cintilo_fixa).pack(anchor=W)
-ttk.Separator(outros_exames, orient=HORIZONTAL).pack(fill=X, pady=3)
-ttk.Label(outros_exames, text='Angiotomografia de Coronárias ou CATE:').pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Uni ou biarterial > 50%', onvalue='angiotomo de coronárias ou CATE com DAC uni ou biarterial > 50%', offvalue='',
+ttk.Separator(outros_exames_frame2, orient=HORIZONTAL).pack(fill=X, pady=3)
+ttk.Label(outros_exames_frame2, text='Angiotomografia de Coronárias ou CATE:').pack(anchor=W)
+ttk.Checkbutton(outros_exames_frame2, text='Uni ou biarterial > 50%', onvalue='angiotomo de coronárias ou CATE com DAC uni ou biarterial > 50%', offvalue='',
                 variable=dac_presente).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Triarterial ou Tronco > 50%', onvalue='angiotomo de coronárias ou CATE com DAC triarterial ou tronco > 50%', offvalue='',
+ttk.Checkbutton(outros_exames_frame2, text='Triarterial ou Tronco > 50%', onvalue='angiotomo de coronárias ou CATE com DAC triarterial ou tronco > 50%', offvalue='',
                 variable=dac_presente).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='DAC não obstrutiva', onvalue='angiotomo de coronárias ou CATE com DAC não obstrutiva', offvalue='',
+ttk.Checkbutton(outros_exames_frame2, text='DAC não obstrutiva', onvalue='angiotomo de coronárias ou CATE com DAC não obstrutiva', offvalue='',
                 variable=dac_presente).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Reestenose de Stent', onvalue='angiotomo de coronárias ou CATE com reestenose de stent', offvalue='',
+ttk.Checkbutton(outros_exames_frame2, text='Reestenose de Stent', onvalue='angiotomo de coronárias ou CATE com reestenose de stent', offvalue='',
                 variable=reestenose_stent).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Enxerto (mamária e/ou safena) ocluído',
+ttk.Checkbutton(outros_exames_frame2, text='Enxerto (mamária e/ou safena) ocluído',
                 onvalue='angiotomo de coronárias ou CATE com enxerto (mamária e/ou safena) ocluído', offvalue='', variable=enxerto_ocluido).pack(anchor=W)
-ttk.Checkbutton(outros_exames, text='Dissecção aórtica', onvalue='angiotomografia ou CATE com dissecção aórtica', offvalue='',
+ttk.Checkbutton(outros_exames_frame2, text='Dissecção aórtica', onvalue='angiotomografia ou CATE com dissecção aórtica', offvalue='',
                 variable=disseccao_aortica).pack(anchor=W)
 
 # 4 - Diagnóstico e Conduta
@@ -875,38 +918,50 @@ ttk.Radiobutton(hd_frame1, text='IAM sem supra de ST', value='IAM sem supra de S
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame1, text='Angina Instável', value='Angina Instável',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+ttk.Radiobutton(hd_frame1, text='IAM tipo 2 (injúria miocárdica)', value='IAM tipo 2 (injúria miocárdica)',
+                variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+
 ttk.Separator(hd_frame1, orient=HORIZONTAL).pack(fill=X, pady=3)
-ttk.Radiobutton(hd_frame1, text='Fibrilação atrial de alta resposta ventricular',
-                value='FA de alta resposta ventricular', variable=hd,
-                command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
-ttk.Radiobutton(hd_frame1, text='Flutter atrial de alta resposta ventricular',
-                value='Flutter de alta resposta ventricular', variable=hd,
+
+ttk.Radiobutton(hd_frame1, text='FA/Flutter de alta resposta ventricular',
+                value='FA ou flutter de alta resposta ventricular', variable=hd,
                 command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame1, text='Taquicardia supraventricular paroxística',
                 value='Taquicardia supraventricular paroxística', variable=hd,
+                command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+ttk.Radiobutton(hd_frame1, text='Taquicardia sinusal sintomática',
+                value='Taquicardia sinusal sintomática', variable=hd,
                 command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame1, text='Taquicardia ventricular estável', value='Taquicardia ventricular sintomática',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame1, text='Taquicardia ventricular instável', value='Taquicardia ventricular instável',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Separator(hd_frame1, orient=HORIZONTAL).pack(fill=X, pady=3)
-ttk.Radiobutton(hd_frame1, text='Bloqueio atrioventricular avançado ou total estável',
+ttk.Radiobutton(hd_frame1, text='FA/Flutter com baixa resposta ventricular',
+                value='FA ou flutter com baixa resposta ventricular', variable=hd,
+                command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+ttk.Radiobutton(hd_frame1, text='BAV não avançado sintomático',
+                value='Bloqueio atrioventricular não avançado sintomático', variable=hd,
+                command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+ttk.Radiobutton(hd_frame1, text='BAV avançado ou total estável',
                 value='Bloqueio atrioventricular avançado ou total estável', variable=hd,
                 command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
-ttk.Radiobutton(hd_frame1, text='Bloqueio atrioventricular avançado ou total instável',
+ttk.Radiobutton(hd_frame1, text='BAV avançado ou total instável',
                 value='Bloqueio atrioventricular avançado ou total instável', variable=hd,
                 command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
-ttk.Radiobutton(hd_frame1, text='Doença do nó sinusal sintomática',
-                value='Doença do nó sinusal sintomática', variable=hd,
+ttk.Radiobutton(hd_frame1, text='Bradicardia sinusal sintomática',
+                value='Bradicardia sinusal sintomática', variable=hd,
                 command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame1, text='Disfunção do marcapasso', value='Disfunção do marcapasso',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+
 ttk.Separator(hd_frame1, orient=HORIZONTAL).pack(fill=X, pady=3)
+
+ttk.Radiobutton(hd_frame1, text='Síncope à esclarecer',
+                value='Síncope à esclarecer', variable=hd,
+                command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame1, text='Síncope vasovagal (neuromediada)',
                 value='Síncope vasovagal (neuromediada)', variable=hd,
-                command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
-ttk.Radiobutton(hd_frame1, text='Síncope por hipersensibilidade do seio carotídeo',
-                value='Síncope por hipersensibilidade do seio carotídeo', variable=hd,
                 command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame1, text='Lipotímia', value='Lipotímia',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
@@ -926,15 +981,25 @@ ttk.Radiobutton(hd_frame2, text='IC descompensada perfil C', value='IC descompen
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame2, text='IC descompensada perfil D', value='IC descompensada perfil D',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+ttk.Radiobutton(hd_frame2, text='IC descompensada perfil L', value='IC descompensada perfil L',
+                variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+
 ttk.Separator(hd_frame2, orient=HORIZONTAL).pack(fill=X, pady=3)
+
+ttk.Radiobutton(hd_frame2, text='Crise hipertensiva', value='Crise hipertensiva',
+                variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+ttk.Radiobutton(hd_frame2, text='Emergência hipertensiva', value='Emergência hipertensiva',
+                variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame2, text='Miocardite e/ou pericardite aguda', value='Miocardite e/ou pericardite aguda',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame2, text='Dissecção aórtica', value='Dissecção aórtica',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame2, text='Embolia pulmonar', value='Embolia pulmonar',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
-ttk.Radiobutton(hd_frame2, text='Dor retroesternal e/ou epigástrica esofago/gástrica',
-                value='Dor retroesternal e/ou epigástrica esofago/gástrica', variable=hd,
+ttk.Radiobutton(hd_frame2, text='Dor torácica à esclarecer', value='Dor torácica à esclarecer',
+                variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
+ttk.Radiobutton(hd_frame2, text='Dor de provável etiologia esofago/gástrica',
+                value='Dor de provável etiologia esofago/gástrica', variable=hd,
                 command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
 ttk.Radiobutton(hd_frame2, text='Dor torácica musculoesquelética', value='Dor torácica musculoesquelética',
                 variable=hd, command=nao_permite_entradada_de_outra_hd).pack(anchor=W)
@@ -967,6 +1032,7 @@ chads_vasc_var = IntVar()
 has_bled_var = IntVar()
 atria_var = IntVar()
 ehmrg_var = IntVar()
+sf_syncope_var = IntVar()
 
 
 def abrir_entry_e_link(escore_var, entry_state, endereco):
@@ -977,7 +1043,6 @@ def abrir_entry_e_link(escore_var, entry_state, endereco):
         confirma_redirecionamento = messagebox.askyesno(message='Deseja ser redirecionado para calculadora online?', title='Confirmação')
         if confirma_redirecionamento:
             webbrowser.open_new(endereco)
-
 
 timi_risk_end = 'https://www.mdcalc.com/timi-risk-score-ua-nstemi'
 ttk.Checkbutton(escores_frame_label, text='TIMI-RISK (SCASST):', cursor="hand2", variable=timi_risk_var,
@@ -1033,6 +1098,15 @@ ttk.Checkbutton(escores_frame_label, text='EHMRG:', cursor="hand2", variable=ehm
 ehmrg = ttk.Entry(escores_frame_entry, state='disabled', width=4)
 ehmrg.pack(anchor=W, pady=4)
 
+ttk.Separator(escores_frame_label, orient=HORIZONTAL).pack(fill=X, pady=3)
+ttk.Separator(escores_frame_entry, orient=HORIZONTAL).pack(fill=X, pady=3)
+
+sf_syncope_end = 'https://www.mdcalc.com/san-francisco-syncope-rule'
+ttk.Checkbutton(escores_frame_label, text='San Francisco:', cursor="hand2", variable=sf_syncope_var,
+                command=lambda: abrir_entry_e_link(sf_syncope_var, sf_syncope, sf_syncope_end)).pack(anchor=W, pady=4)
+sf_syncope = ttk.Entry(escores_frame_entry, state='disabled', width=4)
+sf_syncope.pack(anchor=W, pady=4)
+
 # 4.3 - Condutas
 
 condutas = ttk.LabelFrame(diagnostico_e_conduta, text='Condutas Sugeridas:', borderwidth=5)
@@ -1081,9 +1155,9 @@ ttk.Checkbutton(condutas, text='Tenecteplase', onvalue='Tenecteplase EV', offval
 ttk.Checkbutton(condutas, text='Alteplase', onvalue='Alteplase EV', offvalue='',
                 variable=cd_alteplase).pack(anchor=W)
 ttk.Separator(condutas, orient=HORIZONTAL).pack(fill=X, pady=3)
-ttk.Checkbutton(condutas, text='Morfina', onvalue='Isordil SL', offvalue='',
+ttk.Checkbutton(condutas, text='Morfina', onvalue='Morfina EV', offvalue='',
                 variable=cd_morfina).pack(anchor=W)
-ttk.Checkbutton(condutas, text='Nitrato', onvalue='Morfina EV', offvalue='',
+ttk.Checkbutton(condutas, text='Nitrato', onvalue='Isordil SL', offvalue='',
                 variable=cd_nitrato).pack(anchor=W)
 ttk.Checkbutton(condutas, text='Betabloqueador', onvalue='Betabloqueador VO', offvalue='',
                 variable=cd_betabloq).pack(anchor=W)
@@ -1129,11 +1203,17 @@ ttk.Radiobutton(destino, text='Retornar contato após medidas orientadas',
 ttk.Radiobutton(destino, text='Internação hospitalar',
                 value='Internação hospitalar',
                 variable=destino_var, command=nao_permite_entradada_de_outro_destino).pack(anchor=W)
+ttk.Radiobutton(destino, text='Transferência para TotalCor',
+                value='Transferência para TotalCor',
+                variable=destino_var, command=nao_permite_entradada_de_outro_destino).pack(anchor=W)
+ttk.Radiobutton(destino, text='Transferência para TotalCor (linha vermelha)',
+                value='Transferência para TotalCor (linha vermelha)',
+                variable=destino_var, command=nao_permite_entradada_de_outro_destino).pack(anchor=W)
 ttk.Radiobutton(destino, text='Transferência para hospital de referência',
                 value='Transferência para hospital de referência',
                 variable=destino_var, command=nao_permite_entradada_de_outro_destino).pack(anchor=W)
-ttk.Radiobutton(destino, text='Transferência para hospital de referência (linha vermelha)',
-                value='Transferência para hospital de referência (linha vermelha)',
+ttk.Radiobutton(destino, text='Transferência para referência (linha vermelha)',
+                value='Transferência para referência (linha vermelha)',
                 variable=destino_var, command=nao_permite_entradada_de_outro_destino).pack(anchor=W)
 
 ttk.Separator(destino, orient=HORIZONTAL).pack(fill=X, pady=3)
@@ -1159,21 +1239,22 @@ def permite_obs_final():
         obs_final_entry.configure(state='normal')
 
 
-medicos = ('Pedro', 'Vinicius', 'Bernardo')
+medicos = (
+    'AAAAAAAAAAAAA',
+    'BBBBBBBBBBBBB',
+    'CCCCCCCCCCCCC',
+)
 
 
 ttk.Label(rodape, text='Médico Responsável: ').grid(row=0, column=0)
 medico_responsavel = ttk.Combobox(rodape, values=medicos, width=25, state="readonly")
 medico_responsavel.grid(row=0, column=1, padx=(0, 30))
 
-ttk.Checkbutton(rodape, text='Observação final: ', variable=obs_final_cb,
+ttk.Checkbutton(rodape, text='Observações adicionais: ', variable=obs_final_cb,
                 command=permite_obs_final).grid(row=0, column=2)
 obs_final_entry = ttk.Entry(rodape, state='disabled', width=80)
 obs_final_entry.grid(row=0, column=3, padx=(0, 20))
 
-#------------------------------------------------------------------------------
-
-# Validação de entradas
 
 def validar_entradas():
 
@@ -1187,13 +1268,13 @@ def validar_entradas():
         messagebox.showinfo(message='Insira uma idade válida! Somente números.', title='Erro', icon='error')
     elif int(idade.get()) > 120:
         messagebox.showinfo(message='Insira uma idade válida! Idade menor que 120 anos.', title='Erro', icon='error')
-    elif not match(padrao_data, data_contato.get()):
+    elif not re.match(padrao_data, data_contato.get()):
         messagebox.showinfo(message='Insira uma data válida para o atendimento! Seguir o padrão dia/mês/ano, sendo dia e mês com 2 digitos e ano com 4 dígitos.\n\n\n   Exemplo:  05/04/2018',
                             title='Erro', icon='error')
     elif not hora_contato.get():
         messagebox.showinfo(message='Insira uma hora para o atendimento!',
                             title='Erro', icon='error')
-    elif not match(padrao_hora, hora_contato.get()):
+    elif not re.match(padrao_hora, hora_contato.get()):
         messagebox.showinfo(message='Insira uma hora válida para o atendimento! Seguir o padrão hora:minuto no sistema de 24 horas.\n\n\n   Exemplo:  00:12',
                             title='Erro', icon='error')
     elif not hospital.get():
@@ -1216,10 +1297,19 @@ def validar_entradas():
     elif not medico_responsavel.get():
         messagebox.showinfo(message='Insira o nome do médico responsável pelo atendimento!',
                             title='Erro', icon='error')
-    elif hora_ecg.get() and (not match(padrao_hora, hora_ecg.get())):
+    elif not tipo_contato_var.get():
+        messagebox.showinfo(message='Insira o meio utilizado no contato!',
+                            title='Erro', icon='error')
+    elif hora_ecg.get() and (not re.match(padrao_hora, hora_ecg.get())):
         messagebox.showinfo(message='Insira uma hora de realização do ECG válida! Seguir o padrão hora:minuto no sistema de 24 horas.\n\n\n   Exemplo:  00:12',
                             title='Erro', icon='error')
-
+    elif not (hd.get() or outra_hd.get()):
+        messagebox.showinfo(message='Insira o diagnóstico do paciente!',
+                            title='Erro', icon='error')
+    elif not (destino_var.get() or outro_destino.get()):
+        messagebox.showinfo(message='Insira o destino do paciente!',
+                            title='Erro', icon='error')
+        
     else:
         confirma_submeter = messagebox.askyesno(
             message='Confirma a inclusão do atendimento?', title='Confirmação')
@@ -1228,9 +1318,6 @@ def validar_entradas():
         else:
             pass
 
-#------------------------------------------------------------------------------
-
-# Montar texto e CSV
 
 def montar_texto():
     texto = str()
@@ -1248,7 +1335,7 @@ def montar_texto():
         'Hospital: ' + hospital.get(),
         'Médico: ' + medico.get(),
         'CRM: ' + crm.get(),
-        'Telefone para Contato: ' + tel_contato.get()
+        'Tipo de Contato: ' + tipo_contato_var.get()
     ]
 
     for i in entradas_cabecalho:
@@ -1578,6 +1665,7 @@ def montar_texto():
     # Radiografia de Tórax
 
     entradas_rx = [
+        rx_nao_realizado.get(),
         ac_aumentada.get(),
         derrame_pleural.get(),
         congestao.get(),
@@ -1596,7 +1684,10 @@ def montar_texto():
     if len(filtro_rx) == 0:
         texto += '\n\n' + 'Radiografia de Tórax: ' + 'sem achados relevantes segundo informações fornecidas.'
     elif len(filtro_rx) == 1:
-        texto += '\n\n' + 'Radiografia de Tórax: ' + filtro_rx[0].lower() + ', sem outros achados relevantes segundo informações fornecidas.'
+        if filtro_rx[0] == rx_nao_realizado.get():
+            texto += '\n\n' + 'Radiografia de Tórax: ' + filtro_rx[0].lower() + '.'
+        else:
+            texto += '\n\n' + 'Radiografia de Tórax: ' + filtro_rx[0].lower() + ', sem outros achados relevantes segundo informações fornecidas.'
     else:
         texto += '\n\n' + 'Radiografia de Tórax: ' + ', '.join(filtro_rx).lower() + '.'
 
@@ -1632,11 +1723,11 @@ def montar_texto():
     # Outros Exames
 
     entradas_outros_exames = [
+        nao_ha_outros_exames.get(),
         eco_ve.get(),
         eco_estresse_alterado.get(),
         eco_disfuncao_vd.get(),
         eco_hp.get(),
-        eco_disfuncao_diastolica.get(),
         eco_estenose_importante.get(),
         eco_insuficiencia_importante.get(),
         eco_derrame.get(),
@@ -1659,7 +1750,10 @@ def montar_texto():
     if len(filtro_outros_exames) == 0:
         texto += '\n' + 'Outros Exames: ' + 'sem exames relevantes segundo informações fornecidas.'
     elif len(filtro_outros_exames) == 1:
-        texto += '\n' + 'Outros Exames: ' + filtro_outros_exames[0] + ', sem outros exames relevantes segundo informações fornecidas.'
+        if filtro_outros_exames[0] == nao_ha_outros_exames.get():
+            texto += '\n' + 'Outros Exames: ' + filtro_outros_exames[0] + '.'
+        else:
+            texto += '\n' + 'Outros Exames: ' + filtro_outros_exames[0] + ', sem outros exames relevantes segundo informações fornecidas.'
     else:
         texto += '\n' + 'Outros Exames: ' + ', '.join(filtro_outros_exames) + '.'
 
@@ -1690,7 +1784,8 @@ def montar_texto():
         ('CHADS-VASc de ', chads_vasc.get(), chads_vasc),
         ('HAS-BLED de ', has_bled.get(), has_bled),
         ('ATRIA de ', atria.get(), atria),
-        ('EHMRG de ', ehmrg.get(), ehmrg)
+        ('EHMRG de ', ehmrg.get(), ehmrg),
+        ('San Francisco Syncope de ', sf_syncope.get(), sf_syncope)
     ]
 
     filtro_escores_clinicos = []
@@ -1776,7 +1871,7 @@ def montar_texto():
             'Hospital': hospital.get(),
             'Médico': medico.get(),
             'CRM': crm.get(),
-            'Telefone para Contato': tel_contato.get(),
+            'Telefone para Contato': tipo_contato_var.get(),
             'QP': filtro_qp,
             'HDA': historia_atual.get('1.0', END),
             'AP': ', '.join(filtro_antecedentes),
@@ -1800,8 +1895,8 @@ def montar_texto():
             'Médico Responsável': medico_responsavel.get()
         }
 
-        path_arquivo = os.path.join('C:\\Users\\Public\\Telecardiologia\\Atendimentos', 'atendimentos1.csv')
-        path_arquivo_backup = os.path.join('C:\\Users\\Public\\Telecardiologia\\Backup', 'backup_atendimentos1.csv')
+        path_arquivo = os.path.join('C:\\Users\\Administrador\\Documents\\Telecardiologia\\Atendimentos\\Planilha', 'atendimentos.csv')
+        path_arquivo_backup = os.path.join('C:\\Users\\Administrador\\Documents\\Telecardiologia\\Backup\\Planilha', 'backup.csv')
 
         arquivo_existe = os.path.isfile(path_arquivo)
         arquivo_backup_existe = os.path.isfile(path_arquivo_backup)
@@ -1824,8 +1919,8 @@ def montar_texto():
 
     # Gerar texto
     paciente = nome.get() + '.txt'
-    arquivo_paciente = os.path.join('C:\\Users\\Public\\Telecardiologia\\Atendimentos', paciente)
-    arquivo_paciente_backup = os.path.join('C:\\Users\\Public\\Telecardiologia\\Backup', paciente)
+    arquivo_paciente = os.path.join('C:\\Users\\Administrador\\Documents\\Telecardiologia\\Atendimentos', paciente)
+    arquivo_paciente_backup = os.path.join('C:\\Users\\Administrador\\Documents\\Telecardiologia\\Backup', paciente)
     with open(arquivo_paciente, 'w') as txt_paciente, open(arquivo_paciente_backup, 'w') as txt_paciente_backup:
         txt_paciente.write(texto)
         txt_paciente_backup.write(texto)
@@ -1844,7 +1939,6 @@ def reiniciar_apos_envio():
     else:
         pass
 
-
 def reiniciar_sem_envio():
     confirma_reiniciar = messagebox.askyesno(message='Confirma a reinicialização do atendimento? Você irá perder todos os dados preenchidos.', title='Confirmação')
     if confirma_reiniciar:
@@ -1853,8 +1947,6 @@ def reiniciar_sem_envio():
     else:
         pass
 
-
-# Botões do rodapé
 
 ttk.Button(rodape, text='REINICIAR', command=reiniciar_sem_envio).grid(row=0, column=4)
 ttk.Button(rodape, text='FINALIZAR', command=validar_entradas).grid(row=0, column=5, padx=(8, 0))
